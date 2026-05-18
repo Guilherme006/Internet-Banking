@@ -6,6 +6,7 @@
     "start": "ng serve --proxy-config proxy.conf.json",
     "build": "ng build",
     "build:prod": "ng build --configuration production",
+    "e2e": "playwright test",
     "test": "ng test --no-watch --code-coverage",
     "lint": "ng lint"
   },
@@ -30,6 +31,7 @@
     "@angular-devkit/build-angular": "^18.0.0",
     "@angular/cli": "^18.0.0",
     "@angular/compiler-cli": "^18.0.0",
+    "@playwright/test": "^1.60.0",
     "@types/jasmine": "~5.1.0",
     "@types/uuid": "^9.0.0",
     "autoprefixer": "^10.4.0",
