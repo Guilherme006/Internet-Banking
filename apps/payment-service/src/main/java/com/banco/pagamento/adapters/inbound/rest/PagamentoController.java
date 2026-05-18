@@ -4,9 +4,11 @@ import com.banco.pagamento.adapters.inbound.rest.dto.BoletoResponse;
 import com.banco.pagamento.adapters.inbound.rest.dto.PagamentoRequest;
 import com.banco.pagamento.adapters.inbound.rest.dto.PagamentoResponse;
 import com.banco.pagamento.application.domain.Boleto;
+import com.banco.pagamento.application.domain.Usuario;
 import com.banco.pagamento.application.usecase.PagamentoComando;
 import com.banco.pagamento.application.usecase.PagamentoResultado;
 import com.banco.pagamento.ports.inbound.ConsultarBoletoPort;
+import com.banco.pagamento.ports.inbound.ConsultarUsuarioAutenticadoPort;
 import com.banco.pagamento.ports.inbound.ProcessarPagamentoPort;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
@@ -14,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -34,6 +37,7 @@ public class PagamentoController {
 
     private final ProcessarPagamentoPort processarPagamentoPort;
     private final ConsultarBoletoPort consultarBoletoPort;
+    private final ConsultarUsuarioAutenticadoPort consultarUsuarioAutenticadoPort;
 
     @GetMapping("/boletos/{codigoBarra}")
     public BoletoResponse consultarBoleto(
@@ -46,14 +50,16 @@ public class PagamentoController {
         @PostMapping("/boletos")
     public ResponseEntity<PagamentoResponse> pagarBoleto(
             @RequestHeader(value = "X-Idempotency-Key", required = false) String idempotencyKey,
-            @Valid @RequestBody PagamentoRequest request) {
+            @Valid @RequestBody PagamentoRequest request,
+            Authentication authentication) {
 
         String chave = resolverChaveIdempotencia(idempotencyKey);
+        Usuario usuario = consultarUsuarioAutenticadoPort.consultar(usuarioId(authentication));
         log.info("Iniciando pagamento | conta={} | boleto={} | idempotencyKey={}",
-            request.numeroConta(), request.codigoBarra(), chave);
+            usuario.getNumeroConta(), request.codigoBarra(), chave);
 
         PagamentoComando comando = new PagamentoComando(
-            request.numeroConta(),
+            usuario.getNumeroConta(),
             request.codigoBarra(),
             chave
         );
@@ -97,5 +103,9 @@ public class PagamentoController {
             boleto.getDataVencimento(),
             boleto.getStatus().name()
         );
+    }
+
+    private Long usuarioId(Authentication authentication) {
+        return (Long) authentication.getPrincipal();
     }
 }
