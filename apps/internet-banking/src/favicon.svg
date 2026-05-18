@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Banco Pagamento">
+  <rect width="64" height="64" rx="14" fill="#14b8a6"/>
+  <path d="M12 27h40v5H12v-5Z" fill="#ffffff"/>
+  <path d="M16 36h6v14h-6V36Zm13 0h6v14h-6V36Zm13 0h6v14h-6V36Z" fill="#ffffff"/>
+  <path d="M11 52h42v5H11v-5Z" fill="#ffffff"/>
+  <path d="M32 8 12 21h40L32 8Z" fill="#ffffff"/>
+</svg>
