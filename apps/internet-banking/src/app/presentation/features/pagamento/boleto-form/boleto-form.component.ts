@@ -36,8 +36,10 @@ import { validarBoleto } from '../../../../domain/validators/boleto.validator';
           formControlName="codigoBarra"
           placeholder="Digite ou cole o código de barras..."
           inputmode="numeric"
+          maxlength="59"
           autocomplete="off"
           aria-describedby="codigoBarra-hint codigoBarra-error"
+          (input)="formatarCodigoBarra()"
           (paste)="onPaste($event)"
         />
         <mat-icon matSuffix aria-hidden="true" class="text-slate-400">qr_code</mat-icon>
@@ -206,8 +208,13 @@ export class BoletoFormComponent implements OnChanges {
     const somenteDigitos = texto.replace(/\D/g, '');
     if (somenteDigitos.length >= 44) {
       event.preventDefault();
-      this.form.patchValue({ codigoBarra: somenteDigitos });
+      this.form.patchValue({ codigoBarra: this.formatarBoleto(somenteDigitos) });
     }
+  }
+
+  formatarCodigoBarra(): void {
+    const codigo = this.form.value.codigoBarra?.replace(/\D/g, '') ?? '';
+    this.form.get('codigoBarra')?.setValue(this.formatarBoleto(codigo), { emitEvent: false });
   }
 
   isVencido(): boolean {
@@ -222,5 +229,14 @@ export class BoletoFormComponent implements OnChanges {
     if (control.errors['pattern']) return 'Formato inválido. Use: 12345-6';
     if (control.errors['boletoInvalido']) return control.errors['boletoInvalido'];
     return 'Valor inválido.';
+  }
+
+  private formatarBoleto(codigo: string): string {
+    const limite = codigo.length <= 44 ? 44 : 48;
+    const somenteDigitos = codigo.slice(0, limite);
+    const tamanhoBloco = somenteDigitos.length <= 44 ? 4 : 5;
+    return somenteDigitos
+      .replace(new RegExp(`(\\d{${tamanhoBloco}})(?=\\d)`, 'g'), '$1 ')
+      .trim();
   }
 }

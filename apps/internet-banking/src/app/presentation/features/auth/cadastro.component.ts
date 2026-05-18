@@ -55,10 +55,10 @@ import { CepService } from '../../../core/services/cep.service';
 
           <mat-form-field appearance="outline" class="banking-field w-full">
             <mat-label>CPF</mat-label>
-            <input matInput formControlName="cpf" inputmode="numeric" maxlength="11" autocomplete="off" />
+            <input matInput formControlName="cpf" inputmode="numeric" maxlength="14" autocomplete="off" (input)="formatarCpf()" />
             <mat-icon matSuffix aria-hidden="true">fingerprint</mat-icon>
             @if (form.get('cpf')?.invalid && form.get('cpf')?.touched) {
-              <mat-error>Informe um CPF válido.</mat-error>
+              <mat-error>{{ erroCampo('cpf') }}</mat-error>
             }
           </mat-form-field>
 
@@ -67,7 +67,7 @@ import { CepService } from '../../../core/services/cep.service';
             <input matInput formControlName="senha" type="password" autocomplete="new-password" />
             <mat-icon matSuffix aria-hidden="true">lock</mat-icon>
             @if (form.get('senha')?.invalid && form.get('senha')?.touched) {
-              <mat-error>Use 8+ caracteres com maiúscula, minúscula, número e símbolo.</mat-error>
+              <mat-error>{{ erroCampo('senha') }}</mat-error>
             }
           </mat-form-field>
         </div>
@@ -77,12 +77,12 @@ import { CepService } from '../../../core/services/cep.service';
           <div class="mt-4 grid gap-4 lg:grid-cols-[0.8fr_1.2fr]">
             <mat-form-field appearance="outline" class="banking-field w-full">
               <mat-label>CEP</mat-label>
-              <input matInput formControlName="cep" inputmode="numeric" maxlength="8" autocomplete="postal-code" (blur)="buscarCep()" />
+              <input matInput formControlName="cep" inputmode="numeric" maxlength="9" autocomplete="postal-code" (input)="formatarCep()" (blur)="buscarCep()" />
               <button mat-icon-button matSuffix type="button" (click)="buscarCep()" aria-label="Buscar CEP">
                 <mat-icon aria-hidden="true">{{ buscandoCep ? 'hourglass_top' : 'search' }}</mat-icon>
               </button>
               @if (form.get('cep')?.invalid && form.get('cep')?.touched) {
-                <mat-error>CEP deve conter 8 dígitos.</mat-error>
+                <mat-error>{{ erroCampo('cep') }}</mat-error>
               }
             </mat-form-field>
 
@@ -144,7 +144,7 @@ export class CadastroComponent {
     email: ['', [Validators.required, Validators.email, Validators.maxLength(160)]],
     cpf: ['', [Validators.required, cpfValidator]],
     senha: ['', [Validators.required, Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,72}$/)]],
-    cep: ['', [Validators.required, Validators.pattern(/^\d{8}$/)]],
+    cep: ['', [Validators.required, cepValidator]],
     logradouro: ['', [Validators.required, Validators.maxLength(140)]],
     numero: ['', [Validators.required, Validators.maxLength(20)]],
     complemento: [''],
@@ -187,10 +187,10 @@ export class CadastroComponent {
     this.authService.cadastrar({
       nome: value.nome!,
       email: value.email!,
-      cpf: value.cpf!,
+      cpf: value.cpf!.replace(/\D/g, ''),
       senha: value.senha!,
       endereco: {
-        cep: value.cep!,
+        cep: value.cep!.replace(/\D/g, ''),
         logradouro: value.logradouro!,
         numero: value.numero!,
         complemento: value.complemento ?? '',
@@ -205,6 +205,30 @@ export class CadastroComponent {
       },
       error: () => this.carregando = false,
     });
+  }
+
+  protected formatarCpf(): void {
+    const digits = this.form.value.cpf?.replace(/\D/g, '').slice(0, 11) ?? '';
+    const formatted = digits
+      .replace(/^(\d{3})(\d)/, '$1.$2')
+      .replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3')
+      .replace(/^(\d{3})\.(\d{3})\.(\d{3})(\d)/, '$1.$2.$3-$4');
+    this.form.get('cpf')?.setValue(formatted, { emitEvent: false });
+  }
+
+  protected formatarCep(): void {
+    const digits = this.form.value.cep?.replace(/\D/g, '').slice(0, 8) ?? '';
+    const formatted = digits.replace(/^(\d{5})(\d)/, '$1-$2');
+    this.form.get('cep')?.setValue(formatted, { emitEvent: false });
+  }
+
+  protected erroCampo(campo: 'cpf' | 'senha' | 'cep'): string {
+    const control = this.form.get(campo);
+    if (!control?.errors) return '';
+    if (control.errors['required']) return 'Campo obrigatório.';
+    if (campo === 'cpf') return 'CPF inválido. Verifique os 11 dígitos.';
+    if (campo === 'cep') return 'CEP deve conter 8 dígitos.';
+    return 'Use 8 a 72 caracteres com maiúscula, minúscula, número e símbolo.';
   }
 }
 
@@ -226,4 +250,9 @@ function cpfValidator(control: AbstractControl): ValidationErrors | null {
   return digit(9) === Number(cpf[9]) && digit(10) === Number(cpf[10])
     ? null
     : { cpf: true };
+}
+
+function cepValidator(control: AbstractControl): ValidationErrors | null {
+  const cep = String(control.value ?? '').replace(/\D/g, '');
+  return cep.length === 8 ? null : { cep: true };
 }
