@@ -24,6 +24,12 @@ public class ContaRepositoryAdapter implements ContaRepositoryPort {
     }
 
     @Override
+    public Optional<Conta> buscarPorNumero(String numeroConta) {
+        return contaJpaRepository.findByNumeroConta(numeroConta)
+            .map(contaMapper::toDomain);
+    }
+
+    @Override
     public Conta salvar(Conta conta) {
         ContaEntity entity = contaMapper.toEntity(conta);
         ContaEntity saved = contaJpaRepository.save(entity);
