@@ -5,8 +5,6 @@ import jakarta.validation.constraints.Pattern;
 
 public record PagamentoRequest(
 
-    @NotBlank(message = "O número da conta é obrigatório")
-    @Pattern(regexp = "\\d{5}-\\d", message = "Formato inválido. Use: 12345-6")
     String numeroConta,
 
     @NotBlank(message = "O código de barras do boleto é obrigatório")
