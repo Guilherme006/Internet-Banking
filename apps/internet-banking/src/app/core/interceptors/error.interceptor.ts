@@ -1,12 +1,16 @@
 import { HttpInterceptorFn, HttpStatusCode } from '@angular/common/http';
 import { inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
 import { NotificationService } from '../services/notification.service';
 import { CircuitBreakerService } from '../services/circuit-breaker.service';
+import { AuthService } from '../services/auth.service';
 
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const notification = inject(NotificationService);
   const circuitBreaker = inject(CircuitBreakerService);
+  const authService = inject(AuthService);
+  const router = inject(Router);
 
   return next(req).pipe(
     catchError(error => {
@@ -19,7 +23,9 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
           break;
 
         case HttpStatusCode.Unauthorized:
+          authService.logout();
           notification.aviso('Sessão expirada. Faça login novamente.');
+          router.navigateByUrl('/login');
           break;
 
         case HttpStatusCode.NotFound:
