@@ -4,14 +4,14 @@ import com.banco.pagamento.adapters.inbound.rest.dto.ExtratoResponse;
 import com.banco.pagamento.adapters.inbound.rest.dto.TransacaoResponse;
 import com.banco.pagamento.application.domain.TipoTransacao;
 import com.banco.pagamento.application.domain.Transacao;
+import com.banco.pagamento.application.domain.Usuario;
 import com.banco.pagamento.application.usecase.ConsultarExtratoQuery;
 import com.banco.pagamento.application.usecase.ExtratoResultado;
 import com.banco.pagamento.ports.inbound.ConsultarExtratoPort;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.Pattern;
+import com.banco.pagamento.ports.inbound.ConsultarUsuarioAutenticadoPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -25,15 +25,11 @@ import java.time.OffsetDateTime;
 @RequiredArgsConstructor
 public class ExtratoController {
 
-    private static final String CONTA_DEMO = "12345-6";
-
     private final ConsultarExtratoPort consultarExtratoPort;
+    private final ConsultarUsuarioAutenticadoPort consultarUsuarioAutenticadoPort;
 
     @GetMapping
     public ExtratoResponse consultar(
-            @RequestParam(value = "numeroConta", defaultValue = CONTA_DEMO)
-            @Pattern(regexp = "\\d{5}-\\d", message = "Formato inválido. Use: 12345-6")
-            String numeroConta,
             @RequestParam(value = "tipo", required = false) TipoTransacao tipo,
             @RequestParam(value = "dataInicio", required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
@@ -41,11 +37,14 @@ public class ExtratoController {
             @RequestParam(value = "dataFim", required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
             OffsetDateTime dataFim,
-            @RequestParam(value = "pagina", defaultValue = "0") @Min(0) int pagina,
-            @RequestParam(value = "tamanho", defaultValue = "10") @Min(1) @Max(100) int tamanho) {
+            @RequestParam(value = "pagina", defaultValue = "0") int pagina,
+            @RequestParam(value = "tamanho", defaultValue = "10") int tamanho,
+            Authentication authentication) {
+
+        Usuario usuario = consultarUsuarioAutenticadoPort.consultar(usuarioId(authentication));
 
         ConsultarExtratoQuery query = new ConsultarExtratoQuery(
-            numeroConta,
+            usuario.getNumeroConta(),
             tipo,
             toLocalDateTime(dataInicio),
             toLocalDateTime(dataFim),
@@ -80,5 +79,9 @@ public class ExtratoController {
             transacao.getSaldoApos(),
             transacao.getCategoria()
         );
+    }
+
+    private Long usuarioId(Authentication authentication) {
+        return (Long) authentication.getPrincipal();
     }
 }
