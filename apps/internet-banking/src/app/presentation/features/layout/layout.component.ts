@@ -1,17 +1,18 @@
-import { Component, inject } from '@angular/core';
-import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
+import { Component, inject, signal } from '@angular/core';
+import { NavigationEnd, Router, RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { filter } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { CircuitBreakerService } from '../../../core/services/circuit-breaker.service';
 
 @Component({
-  selector: 'app-root',
+  selector: 'app-shell',
   standalone: true,
   imports: [RouterOutlet, RouterLink, RouterLinkActive, MatIconModule, MatTooltipModule, MatSnackBarModule],
   template: `
-    <div class="min-h-screen bg-[#f4f7fb] text-slate-900 lg:flex">
+      <div class="min-h-screen bg-[#f4f7fb] text-slate-900 lg:flex">
       <a
         href="#main-content"
         class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4
@@ -120,6 +121,15 @@ import { CircuitBreakerService } from '../../../core/services/circuit-breaker.se
               <div class="grid h-9 w-9 place-items-center rounded-full bg-slate-100 text-sm font-semibold text-slate-700">
                 {{ iniciaisUsuario }}
               </div>
+              <button
+                type="button"
+                class="grid h-9 w-9 place-items-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-slate-900"
+                matTooltip="Sair"
+                aria-label="Sair da conta"
+                (click)="sair()"
+              >
+                <mat-icon aria-hidden="true" class="!text-[20px]">logout</mat-icon>
+              </button>
             </div>
           </div>
         </header>
@@ -128,20 +138,40 @@ import { CircuitBreakerService } from '../../../core/services/circuit-breaker.se
           <router-outlet />
         </main>
       </div>
-    </div>
+      </div>
   `,
 })
 export class LayoutComponent {
-  protected usuario = inject(AuthService).obterUsuario();
+  private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
   protected circuitBreaker = inject(CircuitBreakerService);
-  protected iniciaisUsuario = this.usuario.nome
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map(parte => parte.charAt(0).toUpperCase())
-    .join('');
+  protected readonly currentUrl = signal(this.router.url);
+
+  constructor() {
+    this.router.events
+      .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
+      .subscribe(event => this.currentUrl.set(event.urlAfterRedirects));
+  }
+
+  protected get usuario() {
+    return this.authService.obterUsuario();
+  }
+
+  protected get iniciaisUsuario(): string {
+    return this.usuario.nome
+      .split(' ')
+      .filter(Boolean)
+      .slice(0, 2)
+      .map(parte => parte.charAt(0).toUpperCase())
+      .join('');
+  }
 
   protected isActive(path: string): boolean {
-    return window.location.pathname.startsWith(path);
+    return this.currentUrl().startsWith(path);
+  }
+
+  protected sair(): void {
+    this.authService.logout();
+    this.router.navigateByUrl('/login');
   }
 }
