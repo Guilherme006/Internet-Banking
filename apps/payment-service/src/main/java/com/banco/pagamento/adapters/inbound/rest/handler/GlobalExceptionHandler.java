@@ -3,7 +3,10 @@ package com.banco.pagamento.adapters.inbound.rest.handler;
 import com.banco.pagamento.application.domain.exception.BoletoJaPagoException;
 import com.banco.pagamento.application.domain.exception.BoletoNaoEncontradoException;
 import com.banco.pagamento.application.domain.exception.ContaNaoEncontradaException;
+import com.banco.pagamento.application.domain.exception.CredenciaisInvalidasException;
 import com.banco.pagamento.application.domain.exception.SaldoInsuficienteException;
+import com.banco.pagamento.application.domain.exception.UsuarioJaCadastradoException;
+import com.banco.pagamento.application.domain.exception.UsuarioNaoEncontradoException;
 import com.banco.pagamento.adapters.outbound.external.exception.ServicoExternoException;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
@@ -42,6 +45,24 @@ public class GlobalExceptionHandler {
     public ProblemDetail handleBoletoJaPago(BoletoJaPagoException ex) {
         log.warn("Boleto já pago: {}", ex.getMessage());
         return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
+    @ExceptionHandler(CredenciaisInvalidasException.class)
+    public ProblemDetail handleCredenciaisInvalidas(CredenciaisInvalidasException ex) {
+        log.warn("Tentativa de autenticação inválida");
+        return ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, ex.getMessage());
+    }
+
+    @ExceptionHandler(UsuarioJaCadastradoException.class)
+    public ProblemDetail handleUsuarioJaCadastrado(UsuarioJaCadastradoException ex) {
+        log.warn("Cadastro duplicado: {}", ex.getMessage());
+        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
+    @ExceptionHandler(UsuarioNaoEncontradoException.class)
+    public ProblemDetail handleUsuarioNaoEncontrado(UsuarioNaoEncontradoException ex) {
+        log.warn("Usuário autenticado não encontrado");
+        return ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, ex.getMessage());
     }
 
     @ExceptionHandler(ServicoExternoException.class)
