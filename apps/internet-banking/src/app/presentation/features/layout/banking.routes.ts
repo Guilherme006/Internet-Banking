@@ -37,6 +37,14 @@ export const BANKING_ROUTES: Routes = [
           ),
         title: 'Pagar Boleto | Internet Banking',
       },
+      {
+        path: 'minha-conta',
+        loadComponent: () =>
+          import('../minha-conta/minha-conta.component').then(
+            m => m.MinhaContaComponent
+          ),
+        title: 'Minha Conta | Internet Banking',
+      },
     ],
   },
 ];

@@ -2,7 +2,14 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { AuthResponse, AuthUser, CadastroRequest, LoginRequest } from '../../domain/models/auth.model';
+import {
+  AtualizarMinhaContaRequest,
+  AuthResponse,
+  AuthUser,
+  CadastroRequest,
+  LoginRequest,
+  MinhaConta,
+} from '../../domain/models/auth.model';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -43,6 +50,16 @@ export class AuthService {
       .pipe(tap(response => this.salvarSessao(response)));
   }
 
+  minhaConta(): Observable<MinhaConta> {
+    return this.http.get<MinhaConta>(`${environment.apiUrl}/minha-conta`, { withCredentials: true })
+      .pipe(tap(conta => this.atualizarUsuarioLocal(conta)));
+  }
+
+  atualizarMinhaConta(request: AtualizarMinhaContaRequest): Observable<MinhaConta> {
+    return this.http.put<MinhaConta>(`${environment.apiUrl}/minha-conta`, request, { withCredentials: true })
+      .pipe(tap(conta => this.atualizarUsuarioLocal(conta)));
+  }
+
   logout(): void {
     this.http.post(`${environment.apiUrl}/auth/logout`, {}, { withCredentials: true }).subscribe({
       next: () => this.limparSessaoLocal(),
@@ -58,6 +75,19 @@ export class AuthService {
   private salvarSessao(response: AuthResponse): void {
     localStorage.setItem(this.usuarioKey, JSON.stringify(response.usuario));
     this.usuarioSignal.set(response.usuario);
+  }
+
+  private atualizarUsuarioLocal(conta: MinhaConta): void {
+    const usuario: AuthUser = {
+      id: conta.id,
+      nome: conta.nome,
+      email: conta.email,
+      cpf: conta.cpf,
+      agencia: conta.agencia,
+      conta: conta.conta,
+    };
+    localStorage.setItem(this.usuarioKey, JSON.stringify(usuario));
+    this.usuarioSignal.set(usuario);
   }
 
   private carregarUsuario(): AuthUser | null {

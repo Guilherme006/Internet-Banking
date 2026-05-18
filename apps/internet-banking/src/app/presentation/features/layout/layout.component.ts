@@ -81,6 +81,20 @@ import { CircuitBreakerService } from '../../../core/services/circuit-breaker.se
             <mat-icon aria-hidden="true" class="!text-[20px] text-teal-300 group-[.bg-white]:text-teal-700">qr_code_scanner</mat-icon>
             <span class="hidden sm:inline">Pagar boleto</span>
           </a>
+
+          <a
+            routerLink="/minha-conta"
+            routerLinkActive="bg-white text-slate-950 shadow-sm"
+            [routerLinkActiveOptions]="{ exact: false }"
+            class="group inline-flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-semibold
+                   text-slate-300 transition hover:bg-white/10 hover:text-white focus-visible:outline-white
+                   lg:w-full"
+            role="menuitem"
+            [attr.aria-current]="isActive('/minha-conta') ? 'page' : null"
+          >
+            <mat-icon aria-hidden="true" class="!text-[20px] text-teal-300 group-[.bg-white]:text-teal-700">manage_accounts</mat-icon>
+            <span class="hidden sm:inline">Minha conta</span>
+          </a>
         </nav>
 
         <div class="hidden border-t border-slate-800 px-6 py-5 lg:block">

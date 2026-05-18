@@ -30,6 +30,17 @@ export interface AuthUser {
   readonly conta: string;
 }
 
+export interface MinhaConta extends AuthUser {
+  readonly saldo: number;
+  readonly endereco: EnderecoCadastro;
+}
+
+export interface AtualizarMinhaContaRequest {
+  readonly nome: string;
+  readonly email: string;
+  readonly endereco: EnderecoCadastro;
+}
+
 export interface AuthResponse {
   readonly token?: string;
   readonly tipo: string;
