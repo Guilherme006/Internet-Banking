@@ -1,6 +1,7 @@
 package com.banco.pagamento.adapters.inbound.rest;
 
 import com.banco.pagamento.adapters.inbound.rest.dto.PagamentoRequest;
+import com.banco.pagamento.adapters.security.AuditoriaService;
 import com.banco.pagamento.application.domain.Usuario;
 import com.banco.pagamento.application.usecase.ExtratoResultado;
 import com.banco.pagamento.application.usecase.PagamentoResultado;
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 
 import java.math.BigDecimal;
@@ -33,6 +35,7 @@ class ContaAutenticadaControllerTest {
     @Mock private ConsultarBoletoPort consultarBoletoPort;
     @Mock private ConsultarUsuarioAutenticadoPort consultarUsuarioAutenticadoPort;
     @Mock private ConsultarExtratoPort consultarExtratoPort;
+    @Mock private AuditoriaService auditoriaService;
 
     @Test
     @DisplayName("pagamento deve ignorar conta enviada no payload e usar conta autenticada")
@@ -40,7 +43,8 @@ class ContaAutenticadaControllerTest {
         PagamentoController controller = new PagamentoController(
             processarPagamentoPort,
             consultarBoletoPort,
-            consultarUsuarioAutenticadoPort
+            consultarUsuarioAutenticadoPort,
+            auditoriaService
         );
         when(consultarUsuarioAutenticadoPort.consultar(1L)).thenReturn(usuario("12345-6"));
         when(processarPagamentoPort.processar(any())).thenReturn(new PagamentoResultado(
@@ -56,7 +60,8 @@ class ContaAutenticadaControllerTest {
         controller.pagarBoleto(
             "idem-1",
             new PagamentoRequest("99999-9", "23793380896012340900901613951001291070001500000"),
-            new UsernamePasswordAuthenticationToken(1L, null, List.of())
+            new UsernamePasswordAuthenticationToken(1L, null, List.of()),
+            new MockHttpServletRequest()
         );
 
         ArgumentCaptor<com.banco.pagamento.application.usecase.PagamentoComando> captor =

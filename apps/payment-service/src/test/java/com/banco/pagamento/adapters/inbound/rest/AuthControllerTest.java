@@ -3,6 +3,7 @@ package com.banco.pagamento.adapters.inbound.rest;
 import com.banco.pagamento.adapters.inbound.rest.dto.CadastroRequest;
 import com.banco.pagamento.adapters.inbound.rest.dto.EnderecoRequest;
 import com.banco.pagamento.adapters.inbound.rest.dto.LoginRequest;
+import com.banco.pagamento.adapters.security.AuditoriaService;
 import com.banco.pagamento.adapters.security.LoginRateLimiter;
 import com.banco.pagamento.application.domain.Usuario;
 import com.banco.pagamento.application.domain.exception.MuitasTentativasLoginException;
@@ -43,6 +44,7 @@ class AuthControllerTest {
     @Mock private RenovarSessaoPort renovarSessaoPort;
     @Mock private EncerrarSessaoPort encerrarSessaoPort;
     @Mock private LoginRateLimiter loginRateLimiter;
+    @Mock private AuditoriaService auditoriaService;
 
     private AuthController controller;
 
@@ -54,7 +56,8 @@ class AuthControllerTest {
             consultarUsuarioAutenticadoPort,
             renovarSessaoPort,
             encerrarSessaoPort,
-            loginRateLimiter
+            loginRateLimiter,
+            auditoriaService
         );
         ReflectionTestUtils.setField(controller, "secureCookie", false);
         ReflectionTestUtils.setField(controller, "sameSite", "Strict");
@@ -97,6 +100,7 @@ class AuthControllerTest {
     @DisplayName("POST /auth/cadastro deve enviar dados normalizados ao use case")
     void cadastroDeveDelegarComEndereco() {
         when(cadastrarUsuarioPort.cadastrar(any())).thenReturn(sessao());
+        MockHttpServletRequest servletRequest = new MockHttpServletRequest();
         MockHttpServletResponse response = new MockHttpServletResponse();
         CadastroRequest request = new CadastroRequest(
             "Maria Souza",
@@ -106,7 +110,7 @@ class AuthControllerTest {
             new EnderecoRequest("01001000", "Praça da Sé", "100", "", "Sé", "São Paulo", "SP")
         );
 
-        controller.cadastrar(request, response);
+        controller.cadastrar(request, servletRequest, response);
 
         ArgumentCaptor<com.banco.pagamento.application.usecase.CadastroUsuarioComando> captor =
             ArgumentCaptor.forClass(com.banco.pagamento.application.usecase.CadastroUsuarioComando.class);

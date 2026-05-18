@@ -3,6 +3,7 @@ package com.banco.pagamento.adapters.inbound.rest;
 import com.banco.pagamento.adapters.inbound.rest.dto.BoletoResponse;
 import com.banco.pagamento.adapters.inbound.rest.dto.PagamentoRequest;
 import com.banco.pagamento.adapters.inbound.rest.dto.PagamentoResponse;
+import com.banco.pagamento.adapters.security.AuditoriaService;
 import com.banco.pagamento.application.domain.Boleto;
 import com.banco.pagamento.application.domain.Usuario;
 import com.banco.pagamento.application.usecase.PagamentoComando;
@@ -10,6 +11,7 @@ import com.banco.pagamento.application.usecase.PagamentoResultado;
 import com.banco.pagamento.ports.inbound.ConsultarBoletoPort;
 import com.banco.pagamento.ports.inbound.ConsultarUsuarioAutenticadoPort;
 import com.banco.pagamento.ports.inbound.ProcessarPagamentoPort;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +40,7 @@ public class PagamentoController {
     private final ProcessarPagamentoPort processarPagamentoPort;
     private final ConsultarBoletoPort consultarBoletoPort;
     private final ConsultarUsuarioAutenticadoPort consultarUsuarioAutenticadoPort;
+    private final AuditoriaService auditoriaService;
 
     @GetMapping("/boletos/{codigoBarra}")
     public BoletoResponse consultarBoleto(
@@ -51,7 +54,8 @@ public class PagamentoController {
     public ResponseEntity<PagamentoResponse> pagarBoleto(
             @RequestHeader(value = "X-Idempotency-Key", required = false) String idempotencyKey,
             @Valid @RequestBody PagamentoRequest request,
-            Authentication authentication) {
+            Authentication authentication,
+            HttpServletRequest servletRequest) {
 
         String chave = resolverChaveIdempotencia(idempotencyKey);
         Usuario usuario = consultarUsuarioAutenticadoPort.consultar(usuarioId(authentication));
@@ -71,6 +75,14 @@ public class PagamentoController {
 
         log.info("Pagamento concluído | transacaoId={} | reprocessado={}",
             resultado.transacaoId(), resultado.reprocessado());
+        auditoriaService.registrar(
+            "PAGAMENTO_BOLETO",
+            "SUCESSO",
+            usuario.getId(),
+            usuario.getEmail(),
+            servletRequest,
+            "Transacao " + resultado.transacaoId()
+        );
 
         return ResponseEntity.status(status).body(response);
     }

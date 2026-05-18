@@ -5,6 +5,7 @@ import com.banco.pagamento.adapters.inbound.rest.dto.CadastroRequest;
 import com.banco.pagamento.adapters.inbound.rest.dto.EnderecoRequest;
 import com.banco.pagamento.adapters.inbound.rest.dto.LoginRequest;
 import com.banco.pagamento.adapters.inbound.rest.dto.UsuarioResponse;
+import com.banco.pagamento.adapters.security.AuditoriaService;
 import com.banco.pagamento.adapters.security.LoginRateLimiter;
 import com.banco.pagamento.application.domain.Usuario;
 import com.banco.pagamento.application.domain.exception.MuitasTentativasLoginException;
@@ -50,6 +51,7 @@ public class AuthController {
     private final RenovarSessaoPort renovarSessaoPort;
     private final EncerrarSessaoPort encerrarSessaoPort;
     private final LoginRateLimiter loginRateLimiter;
+    private final AuditoriaService auditoriaService;
 
     @Value("${security.cookies.secure}")
     private boolean secureCookie;
@@ -64,6 +66,7 @@ public class AuthController {
             HttpServletResponse response) {
         String ip = clientIp(servletRequest);
         if (!loginRateLimiter.permite(request.email(), ip)) {
+            auditoriaService.registrar("LOGIN", "BLOQUEADO", null, request.email(), servletRequest, "Rate limit excedido");
             throw new MuitasTentativasLoginException();
         }
         try {
@@ -72,16 +75,21 @@ public class AuthController {
             );
             loginRateLimiter.registrarSucesso(request.email(), ip);
             aplicarCookies(response, resultado);
+            auditoriaService.registrar("LOGIN", "SUCESSO", resultado.usuario().id(), resultado.usuario().email(), servletRequest, "Login realizado");
             return toResponse(resultado);
         } catch (RuntimeException ex) {
             loginRateLimiter.registrarFalha(request.email(), ip);
+            auditoriaService.registrar("LOGIN", "FALHA", null, request.email(), servletRequest, "Tentativa inválida");
             throw ex;
         }
     }
 
     @PostMapping("/cadastro")
     @ResponseStatus(HttpStatus.CREATED)
-    public AuthResponse cadastrar(@Valid @RequestBody CadastroRequest request, HttpServletResponse response) {
+    public AuthResponse cadastrar(
+            @Valid @RequestBody CadastroRequest request,
+            HttpServletRequest servletRequest,
+            HttpServletResponse response) {
         AutenticacaoResultado resultado = cadastrarUsuarioPort.cadastrar(
             new CadastroUsuarioComando(
                 request.nome(),
@@ -92,6 +100,7 @@ public class AuthController {
             )
         );
         aplicarCookies(response, resultado);
+        auditoriaService.registrar("CRIACAO_CONTA", "SUCESSO", resultado.usuario().id(), resultado.usuario().email(), servletRequest, "Conta criada");
         return toResponse(resultado);
     }
 

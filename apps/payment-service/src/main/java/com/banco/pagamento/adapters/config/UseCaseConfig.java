@@ -6,15 +6,18 @@ import com.banco.pagamento.application.usecase.ConsultarUsuarioAutenticadoUseCas
 import com.banco.pagamento.application.usecase.ConsultarBoletoUseCase;
 import com.banco.pagamento.application.usecase.ConsultarExtratoUseCase;
 import com.banco.pagamento.application.usecase.EncerrarSessaoUseCase;
+import com.banco.pagamento.application.usecase.MinhaContaUseCase;
 import com.banco.pagamento.application.usecase.PagamentoComando;
 import com.banco.pagamento.application.usecase.PagamentoResultado;
 import com.banco.pagamento.application.usecase.ProcessarPagamentoUseCase;
 import com.banco.pagamento.application.usecase.RenovarSessaoUseCase;
 import com.banco.pagamento.application.usecase.SessaoFactory;
 import com.banco.pagamento.ports.inbound.AutenticarUsuarioPort;
+import com.banco.pagamento.ports.inbound.AtualizarMinhaContaPort;
 import com.banco.pagamento.ports.inbound.CadastrarUsuarioPort;
 import com.banco.pagamento.ports.inbound.ConsultarBoletoPort;
 import com.banco.pagamento.ports.inbound.ConsultarExtratoPort;
+import com.banco.pagamento.ports.inbound.ConsultarMinhaContaPort;
 import com.banco.pagamento.ports.inbound.ConsultarUsuarioAutenticadoPort;
 import com.banco.pagamento.ports.inbound.EncerrarSessaoPort;
 import com.banco.pagamento.ports.inbound.ProcessarPagamentoPort;
@@ -134,6 +137,23 @@ public class UseCaseConfig {
     public ConsultarUsuarioAutenticadoPort consultarUsuarioAutenticadoPort(
             UsuarioRepositoryPort usuarioRepositoryPort) {
         return new ConsultarUsuarioAutenticadoUseCase(usuarioRepositoryPort);
+    }
+
+    @Bean
+    public MinhaContaUseCase minhaContaUseCase(
+            UsuarioRepositoryPort usuarioRepositoryPort,
+            ContaRepositoryPort contaRepositoryPort) {
+        return new MinhaContaUseCase(usuarioRepositoryPort, contaRepositoryPort);
+    }
+
+    @Bean
+    public ConsultarMinhaContaPort consultarMinhaContaPort(MinhaContaUseCase minhaContaUseCase) {
+        return minhaContaUseCase;
+    }
+
+    @Bean
+    public AtualizarMinhaContaPort atualizarMinhaContaPort(MinhaContaUseCase minhaContaUseCase) {
+        return minhaContaUseCase;
     }
 
     @Bean
