@@ -22,4 +22,10 @@ test('fluxo principal do internet banking', async ({ page }) => {
 
   await expect(page.getByText('Agua e Saneamento Municipal')).toBeVisible();
   await expect(page.getByText('Dados do Boleto')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Abrir menu do usuário' }).click();
+  await page.getByRole('menuitem', { name: 'Sair' }).click();
+
+  await expect(page).toHaveURL(/\/login/);
+  await expect(page.getByRole('heading', { name: 'Entrar na conta' })).toBeVisible();
 });
