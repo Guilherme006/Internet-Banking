@@ -113,6 +113,7 @@ import { validarBoleto } from '../../../../domain/validators/boleto.validator';
               matInput
               formControlName="numeroConta"
               placeholder="Ex: 12345-6"
+              readonly
               aria-label="Número da conta a ser debitada"
               aria-describedby="conta-error"
             />
