@@ -11,55 +11,29 @@ O projeto foi organizado como um monorepo com duas aplicações principais:
 
 ## Demonstração
 
-Use os espaços abaixo para inserir imagens do projeto.
-
 ### Login
 
-> Inserir imagem da tela de login.
-
-```md
 ![Login](docs/images/login.png)
-```
 
 ### Cadastro de Usuário
 
-> Inserir imagem da tela de cadastro.
-
-```md
 ![Cadastro](docs/images/cadastro.png)
-```
 
 ### Extrato de Conta
 
-> Inserir imagem da tela de extrato.
-
-```md
 ![Extrato](docs/images/extrato.png)
-```
 
 ### Pagamento de Boleto
 
-> Inserir imagem da tela de consulta/pagamento de boleto.
-
-```md
 ![Pagamento de Boleto](docs/images/pagamento-boleto.png)
-```
 
-### Minha Conta
+### Confirmação de Pagamento
 
-> Inserir imagem da tela de edição cadastral.
+![Confirmação de Pagamento](docs/images/pagamento-confirmacao.png)
 
-```md
-![Minha Conta](docs/images/minha-conta.png)
-```
+### Documentação da API (Swagger)
 
-### Swagger
-
-> Inserir imagem da documentação Swagger.
-
-```md
 ![Swagger](docs/images/swagger.png)
-```
 
 ---
 
@@ -625,26 +599,6 @@ Para obter o contrato OpenAPI:
 
 ```text
 http://localhost:8080/v3/api-docs
-```
-
-### Inserir imagem do Swagger no README
-
-Crie uma pasta para imagens:
-
-```bash
-mkdir -p docs/images
-```
-
-Depois salve a imagem como:
-
-```text
-docs/images/swagger.png
-```
-
-E use:
-
-```md
-![Swagger](docs/images/swagger.png)
 ```
 
 ---
