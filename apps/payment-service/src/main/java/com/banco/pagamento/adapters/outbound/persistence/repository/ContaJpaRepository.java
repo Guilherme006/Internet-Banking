@@ -13,7 +13,9 @@ import java.util.Optional;
 @Repository
 public interface ContaJpaRepository extends JpaRepository<ContaEntity, Long> {
 
-        @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT c FROM ContaEntity c WHERE c.numeroConta = :numeroConta")
     Optional<ContaEntity> findByNumeroContaWithLock(@Param("numeroConta") String numeroConta);
+
+    Optional<ContaEntity> findByNumeroConta(String numeroConta);
 }
