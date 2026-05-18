@@ -3,6 +3,7 @@ import { NavigationEnd, Router, RouterOutlet, RouterLink, RouterLinkActive } fro
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatMenuModule } from '@angular/material/menu';
 import { filter } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { CircuitBreakerService } from '../../../core/services/circuit-breaker.service';
@@ -10,7 +11,7 @@ import { CircuitBreakerService } from '../../../core/services/circuit-breaker.se
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, MatIconModule, MatTooltipModule, MatSnackBarModule],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, MatIconModule, MatTooltipModule, MatSnackBarModule, MatMenuModule],
   template: `
       <div class="min-h-screen bg-[#f4f7fb] text-slate-900 lg:flex">
       <a
@@ -82,19 +83,6 @@ import { CircuitBreakerService } from '../../../core/services/circuit-breaker.se
             <span class="hidden sm:inline">Pagar boleto</span>
           </a>
 
-          <a
-            routerLink="/minha-conta"
-            routerLinkActive="bg-white text-slate-950 shadow-sm"
-            [routerLinkActiveOptions]="{ exact: false }"
-            class="group inline-flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-semibold
-                   text-slate-300 transition hover:bg-white/10 hover:text-white focus-visible:outline-white
-                   lg:w-full"
-            role="menuitem"
-            [attr.aria-current]="isActive('/minha-conta') ? 'page' : null"
-          >
-            <mat-icon aria-hidden="true" class="!text-[20px] text-teal-300 group-[.bg-white]:text-teal-700">manage_accounts</mat-icon>
-            <span class="hidden sm:inline">Minha conta</span>
-          </a>
         </nav>
 
         <div class="hidden border-t border-slate-800 px-6 py-5 lg:block">
@@ -132,18 +120,27 @@ import { CircuitBreakerService } from '../../../core/services/circuit-breaker.se
                 <p class="text-sm font-semibold text-slate-900">{{ usuario.nome }}</p>
                 <p class="text-xs text-slate-500">Ag {{ usuario.agencia }} | CC {{ usuario.conta }}</p>
               </div>
-              <div class="grid h-9 w-9 place-items-center rounded-full bg-slate-100 text-sm font-semibold text-slate-700">
-                {{ iniciaisUsuario }}
-              </div>
               <button
                 type="button"
-                class="grid h-9 w-9 place-items-center rounded-lg border border-slate-200 text-slate-500 transition hover:bg-slate-50 hover:text-slate-900"
-                matTooltip="Sair"
-                aria-label="Sair da conta"
-                (click)="sair()"
+                class="grid h-9 w-9 place-items-center rounded-full bg-slate-100 text-sm font-semibold text-slate-700
+                       transition hover:bg-slate-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2
+                       focus-visible:outline-teal-600"
+                matTooltip="Abrir menu do usuário"
+                aria-label="Abrir menu do usuário"
+                [matMenuTriggerFor]="userMenu"
               >
-                <mat-icon aria-hidden="true" class="!text-[20px]">logout</mat-icon>
+                {{ iniciaisUsuario }}
               </button>
+              <mat-menu #userMenu="matMenu" xPosition="before">
+                <button type="button" mat-menu-item routerLink="/minha-conta">
+                  <mat-icon aria-hidden="true">manage_accounts</mat-icon>
+                  <span>Minha conta</span>
+                </button>
+                <button type="button" mat-menu-item (click)="sair()">
+                  <mat-icon aria-hidden="true">logout</mat-icon>
+                  <span>Sair</span>
+                </button>
+              </mat-menu>
             </div>
           </div>
         </header>

@@ -61,9 +61,9 @@ export class AuthService {
   }
 
   logout(): void {
+    this.limparSessaoLocal();
     this.http.post(`${environment.apiUrl}/auth/logout`, {}, { withCredentials: true }).subscribe({
-      next: () => this.limparSessaoLocal(),
-      error: () => this.limparSessaoLocal(),
+      error: () => undefined,
     });
   }
 
