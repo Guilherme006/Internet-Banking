@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -58,7 +58,7 @@ import { CepService } from '../../../core/services/cep.service';
             <input matInput formControlName="cpf" inputmode="numeric" maxlength="11" autocomplete="off" />
             <mat-icon matSuffix aria-hidden="true">fingerprint</mat-icon>
             @if (form.get('cpf')?.invalid && form.get('cpf')?.touched) {
-              <mat-error>CPF deve conter 11 dígitos.</mat-error>
+              <mat-error>Informe um CPF válido.</mat-error>
             }
           </mat-form-field>
 
@@ -142,7 +142,7 @@ export class CadastroComponent {
   protected form = this.fb.group({
     nome: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(120)]],
     email: ['', [Validators.required, Validators.email, Validators.maxLength(160)]],
-    cpf: ['', [Validators.required, Validators.pattern(/^\d{11}$/)]],
+    cpf: ['', [Validators.required, cpfValidator]],
     senha: ['', [Validators.required, Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,72}$/)]],
     cep: ['', [Validators.required, Validators.pattern(/^\d{8}$/)]],
     logradouro: ['', [Validators.required, Validators.maxLength(140)]],
@@ -206,4 +206,24 @@ export class CadastroComponent {
       error: () => this.carregando = false,
     });
   }
+}
+
+function cpfValidator(control: AbstractControl): ValidationErrors | null {
+  const cpf = String(control.value ?? '').replace(/\D/g, '');
+  if (cpf.length !== 11 || new Set(cpf).size === 1) {
+    return { cpf: true };
+  }
+
+  const digit = (size: number): number => {
+    let sum = 0;
+    for (let index = 0; index < size; index++) {
+      sum += Number(cpf[index]) * (size + 1 - index);
+    }
+    const rest = sum % 11;
+    return rest < 2 ? 0 : 11 - rest;
+  };
+
+  return digit(9) === Number(cpf[9]) && digit(10) === Number(cpf[10])
+    ? null
+    : { cpf: true };
 }

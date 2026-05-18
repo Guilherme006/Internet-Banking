@@ -31,7 +31,7 @@ export interface AuthUser {
 }
 
 export interface AuthResponse {
-  readonly token: string;
+  readonly token?: string;
   readonly tipo: string;
   readonly expiraEmSegundos: number;
   readonly usuario: AuthUser;

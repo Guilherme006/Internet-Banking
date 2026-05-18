@@ -1,7 +1,7 @@
 import { HttpInterceptorFn, HttpStatusCode } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { catchError, throwError } from 'rxjs';
+import { catchError, switchMap, throwError } from 'rxjs';
 import { NotificationService } from '../services/notification.service';
 import { CircuitBreakerService } from '../services/circuit-breaker.service';
 import { AuthService } from '../services/auth.service';
@@ -16,6 +16,22 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
     catchError(error => {
       const status: number = error.status;
       const detail: string = error.error?.detail ?? error.error?.message ?? 'Erro desconhecido';
+      const isAuthRequest = req.url.includes('/auth/login')
+        || req.url.includes('/auth/cadastro')
+        || req.url.includes('/auth/refresh')
+        || req.url.includes('/auth/logout');
+
+      if (status === HttpStatusCode.Unauthorized && !isAuthRequest) {
+        return authService.refresh().pipe(
+          switchMap(() => next(req.clone({ withCredentials: true }))),
+          catchError(refreshError => {
+            authService.limparSessaoLocal();
+            notification.aviso('Sessão expirada. Faça login novamente.');
+            router.navigateByUrl('/login');
+            return throwError(() => refreshError);
+          })
+        );
+      }
 
       switch (status) {
         case HttpStatusCode.BadRequest:
@@ -23,7 +39,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
           break;
 
         case HttpStatusCode.Unauthorized:
-          authService.logout();
+          authService.limparSessaoLocal();
           notification.aviso('Sessão expirada. Faça login novamente.');
           router.navigateByUrl('/login');
           break;

@@ -7,17 +7,11 @@ import { AuthResponse, AuthUser, CadastroRequest, LoginRequest } from '../../dom
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly http = inject(HttpClient);
-  private readonly tokenKey = 'internet-banking.token';
   private readonly usuarioKey = 'internet-banking.usuario';
-  private readonly tokenSignal = signal<string | null>(this.carregarToken());
   private readonly usuarioSignal = signal<AuthUser | null>(this.carregarUsuario());
 
-  readonly autenticado = computed(() => !!this.tokenSignal() && !!this.usuarioSignal());
+  readonly autenticado = computed(() => !!this.usuarioSignal());
   readonly usuarioAtual = computed(() => this.usuarioSignal());
-
-  obterToken(): string | null {
-    return this.tokenSignal();
-  }
 
   obterUsuario(): AuthUser {
     const usuario = this.usuarioSignal();
@@ -35,31 +29,35 @@ export class AuthService {
   }
 
   login(request: LoginRequest): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${environment.apiUrl}/auth/login`, request)
+    return this.http.post<AuthResponse>(`${environment.apiUrl}/auth/login`, request, { withCredentials: true })
       .pipe(tap(response => this.salvarSessao(response)));
   }
 
   cadastrar(request: CadastroRequest): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${environment.apiUrl}/auth/cadastro`, request)
+    return this.http.post<AuthResponse>(`${environment.apiUrl}/auth/cadastro`, request, { withCredentials: true })
+      .pipe(tap(response => this.salvarSessao(response)));
+  }
+
+  refresh(): Observable<AuthResponse> {
+    return this.http.post<AuthResponse>(`${environment.apiUrl}/auth/refresh`, {}, { withCredentials: true })
       .pipe(tap(response => this.salvarSessao(response)));
   }
 
   logout(): void {
-    localStorage.removeItem(this.tokenKey);
+    this.http.post(`${environment.apiUrl}/auth/logout`, {}, { withCredentials: true }).subscribe({
+      next: () => this.limparSessaoLocal(),
+      error: () => this.limparSessaoLocal(),
+    });
+  }
+
+  limparSessaoLocal(): void {
     localStorage.removeItem(this.usuarioKey);
-    this.tokenSignal.set(null);
     this.usuarioSignal.set(null);
   }
 
   private salvarSessao(response: AuthResponse): void {
-    localStorage.setItem(this.tokenKey, response.token);
     localStorage.setItem(this.usuarioKey, JSON.stringify(response.usuario));
-    this.tokenSignal.set(response.token);
     this.usuarioSignal.set(response.usuario);
-  }
-
-  private carregarToken(): string | null {
-    return localStorage.getItem(this.tokenKey);
   }
 
   private carregarUsuario(): AuthUser | null {
