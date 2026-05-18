@@ -2,8 +2,10 @@ package com.banco.pagamento.adapters.inbound.rest.handler;
 
 import com.banco.pagamento.application.domain.exception.BoletoJaPagoException;
 import com.banco.pagamento.application.domain.exception.BoletoNaoEncontradoException;
+import com.banco.pagamento.application.domain.exception.CadastroInvalidoException;
 import com.banco.pagamento.application.domain.exception.ContaNaoEncontradaException;
 import com.banco.pagamento.application.domain.exception.CredenciaisInvalidasException;
+import com.banco.pagamento.application.domain.exception.SessaoInvalidaException;
 import com.banco.pagamento.application.domain.exception.SaldoInsuficienteException;
 import com.banco.pagamento.application.domain.exception.UsuarioJaCadastradoException;
 import com.banco.pagamento.application.domain.exception.UsuarioNaoEncontradoException;
@@ -47,9 +49,21 @@ public class GlobalExceptionHandler {
         return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
     }
 
+    @ExceptionHandler(CadastroInvalidoException.class)
+    public ProblemDetail handleCadastroInvalido(CadastroInvalidoException ex) {
+        log.warn("Cadastro inválido: {}", ex.getMessage());
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
     @ExceptionHandler(CredenciaisInvalidasException.class)
     public ProblemDetail handleCredenciaisInvalidas(CredenciaisInvalidasException ex) {
         log.warn("Tentativa de autenticação inválida");
+        return ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, ex.getMessage());
+    }
+
+    @ExceptionHandler(SessaoInvalidaException.class)
+    public ProblemDetail handleSessaoInvalida(SessaoInvalidaException ex) {
+        log.warn("Sessão inválida");
         return ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, ex.getMessage());
     }
 

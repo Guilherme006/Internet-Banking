@@ -10,5 +10,7 @@ public interface ContaRepositoryPort {
 
     Optional<Conta> buscarPorNumero(String numeroConta);
 
+    boolean existePorNumero(String numeroConta);
+
     Conta salvar(Conta conta);
 }

@@ -30,9 +30,14 @@ public class ContaRepositoryAdapter implements ContaRepositoryPort {
     }
 
     @Override
+    public boolean existePorNumero(String numeroConta) {
+        return contaJpaRepository.existsByNumeroConta(numeroConta);
+    }
+
+    @Override
     public Conta salvar(Conta conta) {
         ContaEntity entity = contaMapper.toEntity(conta);
-        ContaEntity saved = contaJpaRepository.save(entity);
+        ContaEntity saved = contaJpaRepository.saveAndFlush(entity);
         return contaMapper.toDomain(saved);
     }
 }

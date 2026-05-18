@@ -3,6 +3,7 @@ package com.banco.pagamento.adapters.config;
 import com.banco.pagamento.adapters.outbound.security.JwtTokenAdapter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
+    public static final String ACCESS_COOKIE = "BP_ACCESS_TOKEN";
+
     private final JwtTokenAdapter jwtTokenAdapter;
 
     @Override
@@ -26,14 +29,32 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
 
-        String authorization = request.getHeader("Authorization");
-        if (authorization != null && authorization.startsWith("Bearer ")) {
-            jwtTokenAdapter.extrairUsuarioId(authorization.substring(7))
-                .ifPresent(usuarioId -> SecurityContextHolder.getContext().setAuthentication(
-                    new UsernamePasswordAuthenticationToken(usuarioId, null, List.of())
+        String token = obterToken(request);
+        if (token != null) {
+            jwtTokenAdapter.extrairAccessToken(token)
+                .ifPresent(claims -> SecurityContextHolder.getContext().setAuthentication(
+                    new UsernamePasswordAuthenticationToken(claims.usuarioId(), null, List.of())
                 ));
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private String obterToken(HttpServletRequest request) {
+        String authorization = request.getHeader("Authorization");
+        if (authorization != null && authorization.startsWith("Bearer ")) {
+            return authorization.substring(7);
+        }
+
+        if (request.getCookies() == null) {
+            return null;
+        }
+
+        for (Cookie cookie : request.getCookies()) {
+            if (ACCESS_COOKIE.equals(cookie.getName())) {
+                return cookie.getValue();
+            }
+        }
+        return null;
     }
 }

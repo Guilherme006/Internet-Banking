@@ -1,104 +1,94 @@
 package com.banco.pagamento.adapters.outbound.security;
 
+import com.banco.pagamento.application.domain.TokenClaims;
 import com.banco.pagamento.application.domain.Usuario;
 import com.banco.pagamento.ports.outbound.TokenPort;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
+import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.Instant;
-import java.util.Base64;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.Date;
 import java.util.Optional;
 
 @Component
 public class JwtTokenAdapter implements TokenPort {
 
-    private static final String HMAC_ALGORITHM = "HmacSHA256";
-    private static final Base64.Encoder ENCODER = Base64.getUrlEncoder().withoutPadding();
-    private static final Base64.Decoder DECODER = Base64.getUrlDecoder();
+    private static final String TYPE_CLAIM = "typ";
+    private static final String ACCESS_TYPE = "access";
+    private static final String REFRESH_TYPE = "refresh";
 
-    private final ObjectMapper objectMapper;
-    private final byte[] secret;
-    private final long expirationMinutes;
+    private final SecretKey secretKey;
+    private final Duration accessTtl;
+    private final Duration refreshTtl;
 
     public JwtTokenAdapter(
-            ObjectMapper objectMapper,
             @Value("${security.jwt.secret}") String secret,
-            @Value("${security.jwt.expiration-minutes}") long expirationMinutes) {
-        this.objectMapper = objectMapper;
-        this.secret = secret.getBytes(StandardCharsets.UTF_8);
-        this.expirationMinutes = expirationMinutes;
+            @Value("${security.jwt.expiration-minutes}") long expirationMinutes,
+            @Value("${security.jwt.refresh-expiration-days}") long refreshExpirationDays) {
+        this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+        this.accessTtl = Duration.ofMinutes(expirationMinutes);
+        this.refreshTtl = Duration.ofDays(refreshExpirationDays);
     }
 
     @Override
-    public String gerar(Usuario usuario) {
-        Instant agora = Instant.now();
-        Map<String, Object> header = new LinkedHashMap<>();
-        header.put("alg", "HS256");
-        header.put("typ", "JWT");
-
-        Map<String, Object> payload = new LinkedHashMap<>();
-        payload.put("sub", usuario.getId());
-        payload.put("email", usuario.getEmail());
-        payload.put("nome", usuario.getNome());
-        payload.put("iat", agora.getEpochSecond());
-        payload.put("exp", agora.plusSeconds(expirationMinutes * 60).getEpochSecond());
-
-        String unsignedToken = encodeJson(header) + "." + encodeJson(payload);
-        return unsignedToken + "." + assinar(unsignedToken);
+    public String gerarAccessToken(Usuario usuario) {
+        return gerar(usuario, null, ACCESS_TYPE, accessTtl);
     }
 
-    public Optional<Long> extrairUsuarioId(String token) {
+    @Override
+    public String gerarRefreshToken(Usuario usuario, String jti) {
+        return gerar(usuario, jti, REFRESH_TYPE, refreshTtl);
+    }
+
+    @Override
+    public Optional<TokenClaims> extrairAccessToken(String token) {
+        return extrair(token, ACCESS_TYPE);
+    }
+
+    @Override
+    public Optional<TokenClaims> extrairRefreshToken(String token) {
+        return extrair(token, REFRESH_TYPE);
+    }
+
+    private String gerar(Usuario usuario, String jti, String tipo, Duration ttl) {
+        Instant agora = Instant.now();
+        return Jwts.builder()
+            .subject(String.valueOf(usuario.getId()))
+            .id(jti)
+            .claim(TYPE_CLAIM, tipo)
+            .claim("email", usuario.getEmail())
+            .claim("nome", usuario.getNome())
+            .issuedAt(Date.from(agora))
+            .expiration(Date.from(agora.plus(ttl)))
+            .signWith(secretKey, Jwts.SIG.HS256)
+            .compact();
+    }
+
+    private Optional<TokenClaims> extrair(String token, String tipoEsperado) {
         try {
-            String[] partes = token.split("\\.");
-            if (partes.length != 3) {
+            Claims claims = Jwts.parser()
+                .verifyWith(secretKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+
+            if (!tipoEsperado.equals(claims.get(TYPE_CLAIM, String.class))) {
                 return Optional.empty();
             }
 
-            String unsignedToken = partes[0] + "." + partes[1];
-            if (!assinar(unsignedToken).equals(partes[2])) {
-                return Optional.empty();
-            }
-
-            Map<String, Object> payload = objectMapper.readValue(
-                DECODER.decode(partes[1]),
-                new TypeReference<>() {
-                }
-            );
-
-            Number exp = (Number) payload.get("exp");
-            if (exp == null || exp.longValue() < Instant.now().getEpochSecond()) {
-                return Optional.empty();
-            }
-
-            Number sub = (Number) payload.get("sub");
-            return sub == null ? Optional.empty() : Optional.of(sub.longValue());
+            return Optional.of(new TokenClaims(
+                Long.valueOf(claims.getSubject()),
+                claims.getId(),
+                tipoEsperado
+            ));
         } catch (Exception ex) {
             return Optional.empty();
-        }
-    }
-
-    private String encodeJson(Map<String, Object> value) {
-        try {
-            return ENCODER.encodeToString(objectMapper.writeValueAsBytes(value));
-        } catch (Exception ex) {
-            throw new IllegalStateException("Falha ao gerar token.", ex);
-        }
-    }
-
-    private String assinar(String conteudo) {
-        try {
-            Mac mac = Mac.getInstance(HMAC_ALGORITHM);
-            mac.init(new SecretKeySpec(secret, HMAC_ALGORITHM));
-            return ENCODER.encodeToString(mac.doFinal(conteudo.getBytes(StandardCharsets.UTF_8)));
-        } catch (Exception ex) {
-            throw new IllegalStateException("Falha ao assinar token.", ex);
         }
     }
 }

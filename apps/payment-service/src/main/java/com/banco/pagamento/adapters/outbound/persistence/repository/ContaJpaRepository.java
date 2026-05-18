@@ -18,4 +18,6 @@ public interface ContaJpaRepository extends JpaRepository<ContaEntity, Long> {
     Optional<ContaEntity> findByNumeroContaWithLock(@Param("numeroConta") String numeroConta);
 
     Optional<ContaEntity> findByNumeroConta(String numeroConta);
+
+    boolean existsByNumeroConta(String numeroConta);
 }

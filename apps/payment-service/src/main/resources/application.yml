@@ -67,7 +67,11 @@ outbox:
 security:
   jwt:
     secret: ${JWT_SECRET:dev-only-change-this-secret-with-at-least-32-chars}
-    expiration-minutes: ${JWT_EXPIRATION_MINUTES:60}
+    expiration-minutes: ${JWT_EXPIRATION_MINUTES:15}
+    refresh-expiration-days: ${JWT_REFRESH_EXPIRATION_DAYS:7}
+  cookies:
+    secure: ${COOKIE_SECURE:false}
+    same-site: ${COOKIE_SAME_SITE:Strict}
 
 resilience4j:
   circuitbreaker:

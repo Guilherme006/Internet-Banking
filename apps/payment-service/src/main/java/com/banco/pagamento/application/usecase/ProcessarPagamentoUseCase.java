@@ -12,6 +12,7 @@ import com.banco.pagamento.ports.outbound.ContaRepositoryPort;
 import com.banco.pagamento.ports.outbound.IdempotenciaPort;
 import com.banco.pagamento.ports.outbound.NotificacaoKafkaPort;
 import com.banco.pagamento.ports.outbound.TransacaoRepositoryPort;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -41,6 +42,7 @@ public class ProcessarPagamentoUseCase {
         this.transacaoRepository = transacaoRepository;
     }
 
+    @Transactional
     public PagamentoResultado processar(PagamentoComando comando) {
         Optional<PagamentoResultado> cached = idempotencia.buscar(comando.chaveIdempotencia());
         if (cached.isPresent()) {
