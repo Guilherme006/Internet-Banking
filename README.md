@@ -9,6 +9,33 @@ O projeto foi organizado como um monorepo com duas aplicações principais:
 
 ---
 
+## Sumário
+
+- [Demonstração](#demonstração)
+- [Funcionalidades](#funcionalidades)
+- [Arquitetura](#arquitetura)
+- [Arquitetura do Frontend](#arquitetura-do-frontend)
+- [Tecnologias Utilizadas](#tecnologias-utilizadas)
+- [Fluxo Principal da Aplicação](#fluxo-principal-da-aplicação)
+- [Estrutura do Repositório](#estrutura-do-repositório)
+- [Como Rodar com Docker](#como-rodar-com-docker)
+- [Credenciais de Demonstração](#credenciais-de-demonstração)
+- [Configuração de Ambiente](#configuração-de-ambiente)
+- [Banco de Dados](#banco-de-dados)
+- [Endpoints Principais](#endpoints-principais)
+- [Swagger](#swagger)
+- [Rodar Backend Localmente](#rodar-backend-localmente)
+- [Rodar Frontend Localmente](#rodar-frontend-localmente)
+- [Testes](#testes)
+- [CI no GitHub Actions](#ci-no-github-actions)
+- [Segurança](#segurança)
+- [Observabilidade](#observabilidade)
+- [Decisões Técnicas](#decisões-técnicas)
+- [Melhorias Futuras](#melhorias-futuras)
+- [Licença](#licença)
+
+---
+
 ## Demonstração
 
 ### Login
@@ -810,10 +837,4 @@ Sugestões para evolução:
 
 ## Licença
 
-Defina aqui a licença do projeto.
-
-Exemplo:
-
-```text
-MIT
-```
+MIT — consulte o arquivo [LICENSE](LICENSE) para mais detalhes.
