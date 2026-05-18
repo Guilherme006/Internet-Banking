@@ -1,0 +1,23 @@
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+  flyway:
+    locations: classpath:db/migration/common
+
+security:
+  jwt:
+    secret: ${JWT_SECRET}
+    expiration-minutes: ${JWT_EXPIRATION_MINUTES:15}
+    refresh-expiration-days: ${JWT_REFRESH_EXPIRATION_DAYS:7}
+  cookies:
+    secure: ${COOKIE_SECURE:true}
+    same-site: ${COOKIE_SAME_SITE:Strict}
+
+logging:
+  level:
+    com.banco.pagamento: INFO
+    org.springframework.kafka: WARN
+    io.github.resilience4j: INFO
+    org.hibernate.SQL: WARN

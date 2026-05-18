@@ -5,6 +5,7 @@ import com.banco.pagamento.application.domain.exception.BoletoNaoEncontradoExcep
 import com.banco.pagamento.application.domain.exception.CadastroInvalidoException;
 import com.banco.pagamento.application.domain.exception.ContaNaoEncontradaException;
 import com.banco.pagamento.application.domain.exception.CredenciaisInvalidasException;
+import com.banco.pagamento.application.domain.exception.MuitasTentativasLoginException;
 import com.banco.pagamento.application.domain.exception.SessaoInvalidaException;
 import com.banco.pagamento.application.domain.exception.SaldoInsuficienteException;
 import com.banco.pagamento.application.domain.exception.UsuarioJaCadastradoException;
@@ -59,6 +60,12 @@ public class GlobalExceptionHandler {
     public ProblemDetail handleCredenciaisInvalidas(CredenciaisInvalidasException ex) {
         log.warn("Tentativa de autenticação inválida");
         return ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, ex.getMessage());
+    }
+
+    @ExceptionHandler(MuitasTentativasLoginException.class)
+    public ProblemDetail handleMuitasTentativasLogin(MuitasTentativasLoginException ex) {
+        log.warn("Login bloqueado por excesso de tentativas");
+        return ProblemDetail.forStatusAndDetail(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage());
     }
 
     @ExceptionHandler(SessaoInvalidaException.class)

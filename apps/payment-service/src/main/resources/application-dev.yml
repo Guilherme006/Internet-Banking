@@ -1,0 +1,8 @@
+spring:
+  flyway:
+    locations: classpath:db/migration/common,classpath:db/migration/dev
+
+logging:
+  level:
+    com.banco.pagamento: DEBUG
+    org.hibernate.SQL: INFO

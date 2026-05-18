@@ -1,0 +1,18 @@
+spring:
+  flyway:
+    locations: classpath:db/migration/common
+
+security:
+  cookies:
+    secure: false
+    same-site: Strict
+  rate-limit:
+    login:
+      enabled: false
+
+logging:
+  level:
+    com.banco.pagamento: INFO
+    org.springframework.kafka: WARN
+    io.github.resilience4j: WARN
+    org.hibernate.SQL: WARN

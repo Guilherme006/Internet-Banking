@@ -5,7 +5,9 @@ import com.banco.pagamento.adapters.inbound.rest.dto.CadastroRequest;
 import com.banco.pagamento.adapters.inbound.rest.dto.EnderecoRequest;
 import com.banco.pagamento.adapters.inbound.rest.dto.LoginRequest;
 import com.banco.pagamento.adapters.inbound.rest.dto.UsuarioResponse;
+import com.banco.pagamento.adapters.security.LoginRateLimiter;
 import com.banco.pagamento.application.domain.Usuario;
+import com.banco.pagamento.application.domain.exception.MuitasTentativasLoginException;
 import com.banco.pagamento.application.usecase.AutenticacaoResultado;
 import com.banco.pagamento.application.usecase.CadastroUsuarioComando;
 import com.banco.pagamento.application.usecase.EnderecoComando;
@@ -47,6 +49,7 @@ public class AuthController {
     private final ConsultarUsuarioAutenticadoPort consultarUsuarioAutenticadoPort;
     private final RenovarSessaoPort renovarSessaoPort;
     private final EncerrarSessaoPort encerrarSessaoPort;
+    private final LoginRateLimiter loginRateLimiter;
 
     @Value("${security.cookies.secure}")
     private boolean secureCookie;
@@ -55,12 +58,25 @@ public class AuthController {
     private String sameSite;
 
     @PostMapping("/login")
-    public AuthResponse login(@Valid @RequestBody LoginRequest request, HttpServletResponse response) {
-        AutenticacaoResultado resultado = autenticarUsuarioPort.autenticar(
-            new LoginComando(request.email(), request.senha())
-        );
-        aplicarCookies(response, resultado);
-        return toResponse(resultado);
+    public AuthResponse login(
+            @Valid @RequestBody LoginRequest request,
+            HttpServletRequest servletRequest,
+            HttpServletResponse response) {
+        String ip = clientIp(servletRequest);
+        if (!loginRateLimiter.permite(request.email(), ip)) {
+            throw new MuitasTentativasLoginException();
+        }
+        try {
+            AutenticacaoResultado resultado = autenticarUsuarioPort.autenticar(
+                new LoginComando(request.email(), request.senha())
+            );
+            loginRateLimiter.registrarSucesso(request.email(), ip);
+            aplicarCookies(response, resultado);
+            return toResponse(resultado);
+        } catch (RuntimeException ex) {
+            loginRateLimiter.registrarFalha(request.email(), ip);
+            throw ex;
+        }
     }
 
     @PostMapping("/cadastro")
@@ -174,5 +190,13 @@ public class AuthController {
             }
         }
         return "";
+    }
+
+    private String clientIp(HttpServletRequest request) {
+        String forwardedFor = request.getHeader("X-Forwarded-For");
+        if (forwardedFor != null && !forwardedFor.isBlank()) {
+            return forwardedFor.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
     }
 }
