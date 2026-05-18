@@ -45,7 +45,7 @@ import { validarBoleto } from '../../../../domain/validators/boleto.validator';
           <mat-icon matSuffix aria-hidden="true" class="text-emerald-500">check_circle</mat-icon>
         }
         <mat-hint id="codigoBarra-hint">
-          44 dígitos (código de barras) ou 47 dígitos (linha digitável)
+          44 dígitos para código de barras ou 47/48 dígitos para linha digitável
         </mat-hint>
         @if (form.get('codigoBarra')?.invalid && form.get('codigoBarra')?.touched) {
           <mat-error id="codigoBarra-error" role="alert">
