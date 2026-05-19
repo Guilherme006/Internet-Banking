@@ -6,8 +6,12 @@ test('fluxo principal do internet banking', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Entrar na conta' })).toBeVisible();
   await page.getByLabel('E-mail').fill('joao@bancopagamento.com');
   await page.getByRole('textbox', { name: 'Senha' }).fill('Senha@123');
-  await page.getByRole('button', { name: /entrar/i }).click();
+  const loginResponse = page.waitForResponse(response =>
+    response.url().includes('/api/v1/auth/login') && response.request().method() === 'POST'
+  );
 
+  await page.getByRole('button', { name: /entrar/i }).click();
+  expect((await loginResponse).ok()).toBeTruthy();
   await expect(page).toHaveURL(/\/extrato/);
   await expect(page.getByRole('heading', { name: 'Extrato de Conta' })).toBeVisible();
 

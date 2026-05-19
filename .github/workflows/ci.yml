@@ -94,11 +94,13 @@ jobs:
         working-directory: .
         run: docker compose up -d --build
 
-      - name: Wait for frontend
+      - name: Wait for application
         working-directory: .
         run: |
           for i in {1..60}; do
-            curl -fsS http://localhost:4200 >/dev/null && exit 0
+            curl -fsS http://localhost:4200 >/dev/null \
+              && curl -fsS http://localhost:8080/actuator/health >/dev/null \
+              && exit 0
             sleep 2
           done
           docker compose ps
